@@ -26,20 +26,19 @@ def do_echo(update: Update, context: CallbackContext) -> None:
     name = update.message.from_user.first_name
     id = update.message.chat_id
     text = update.message.text
-    update.message.reply_text(text=f'Привет, {name}(id: "{id}")\n'
-                                   f'Ты написал "{text}"')
+    update.message.reply_text(text=f'{text}')
 
 
-def say_hello(update: Update, context: CallbackContext):
+def say_hello(update: Update, context: CallbackContext) -> None:
     name = update.message.from_user.first_name
+    surname = update.message.from_user.last_name
     id = update.message.chat_id
     username = update.message.from_user.username
     text = update.message.text
-    update.message.reply_text(text=f'Привет, {name}, id: "{id}", @{username}!\n'
+    update.message.reply_text(text=f'Привет, {name} {surname}-@{username}\nid: {id}\n'
                                    'Приятно познакомится с живым человеком!)\n'
-                                   'Я - бот.\n'
-                                   'Умею показывать что ты написал.\n'
-                                   f'Ты написал "{text}"')
+                                   'Я — бот.\n'
+                                   'Умею показывать что ты написал.\n')
 
 
 if __name__ == '__main__':
