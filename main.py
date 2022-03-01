@@ -53,8 +53,7 @@ def static(update: Update, context: CallbackContext) -> None:
              f'id: {telegram_id}\n'
              'Приятно познакомится с живым человеком! :)\n'
              'Я — бот.\n'
-             'Умею показывать что ты написал.',
-        reply_markup=ReplyKeyboardRemove()
+             'Умею показывать что ты написал.'
     )
     print(username, ':', text)
 
@@ -72,7 +71,7 @@ def keyboard(update: Update, context: CallbackContext) -> None:
         reply_markup=ReplyKeyboardMarkup(
             buttons,
             resize_keyboard=True,
-            # one_time_keyboard=True,
+            one_time_keyboard=True,
 
         )
     )
@@ -84,7 +83,7 @@ def say_hello(update: Update, context: CallbackContext) -> None:
     telegram_id = update.message.chat_id
     username = update.message.from_user.username
     text = update.message.text
-    update.message.reply_sticker(stickers["привет"])
+    update.message.reply_sticker(stickers['привет'])
     print(username, ':', text)
 
 
