@@ -18,10 +18,10 @@ def main():
     sticker_handler = MessageHandler(Filters.sticker, reply_sticker)
     say_smth_handler = MessageHandler(Filters.text, say_smth)
 
+    dispatcher.add_handler(say_smth_handler)
     dispatcher.add_handler(sticker_handler)
     dispatcher.add_handler(keyboard_handler)
     dispatcher.add_handler(static_handler)
-    dispatcher.add_handler(say_smth_handler)
     dispatcher.add_handler(echo_handler)
 
     updater.start_polling()
@@ -57,7 +57,7 @@ def static(update: Update, context: CallbackContext) -> None:
 
 def keyboard(update: Update, context: CallbackContext) -> None:
     buttons = [
-        ['1', '2', '3'],
+        ['Добавить стикер'],
         ['Привет', 'Пока']
     ]
     keys = ReplyKeyboardMarkup(
@@ -87,8 +87,12 @@ def say_smth(update: Update, context: CallbackContext) -> None:
     text = update.message.text
     for keyword in stickers:
         if keyword in text:
-            update.message.reply_sticker(stickers[keyword])
-            update.message.reply_text(replies[keyword])
+            if stickers[keyword]:
+                update.message.reply_sticker(stickers[keyword])
+            if replies[keyword]:
+                update.message.reply_text(replies[keyword])
+    else:
+        do_echo(update, context)
 
 
 if __name__ == '__main__':
