@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from key import TOKEN
-from connect_to_derictory import stickers, replies
+from connect_to_derictory import stickers, replies, insert_sticker
 
 
 def main():
@@ -17,7 +17,11 @@ def main():
     static_handler = MessageHandler(Filters.text('Статистика, статистика'), static)
     sticker_handler = MessageHandler(Filters.sticker, reply_sticker)
     say_smth_handler = MessageHandler(Filters.text, say_smth)
+    new_sticker_handler = MessageHandler(Filters.sticker, new_sticker)
+    text_handler = MessageHandler(Filters.text, new_keyword)
 
+    dispatcher.add_handler(new_sticker_handler)
+    dispatcher.add_handler(text_handler)
     dispatcher.add_handler(say_smth_handler)
     dispatcher.add_handler(sticker_handler)
     dispatcher.add_handler(keyboard_handler)
@@ -93,6 +97,28 @@ def say_smth(update: Update, context: CallbackContext) -> None:
                 update.message.reply_text(replies[keyword])
     else:
         do_echo(update, context)
+
+
+def new_sticker(update: Update, context: CallbackContext) -> None:
+    sticker_id = update.message.sticker.file_id
+    for keyword in stickers:
+        if sticker_id == stickers[keyword]:
+            update.message.reply_text('у меня тоже такой есть')
+            update.message.reply_sticker(sticker_id)
+            break
+    else:
+        context.user_data['new_sticker'] = sticker_id
+        update.message.reply_text('введи ключевое слово')
+
+
+def new_keyword(update: Update, context: CallbackContext) -> None:
+    if 'new_sticker' not in context.user_data:
+        say_smth(update, context)
+    else:
+        keyword = update.message.text
+        sticker_id = context.user_data['new_sticker']
+        insert_sticker(keyword, sticker_id)
+        context.user_data.clear()
 
 
 if __name__ == '__main__':
