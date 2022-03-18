@@ -1,3 +1,4 @@
+
 def fact(n: int) -> int:
     """
     Возвращает факториал от числа n
@@ -26,4 +27,18 @@ def power(a: float, n: int) -> float:
     return power(a, n-1) * a
 
 
-print(power(2, 16))
+def generate_numbers(n: int, m: int, prefix=None) -> None:
+    """
+    Выводит в консоль все перестановки длинной m в системе счисления n
+    """
+    if m == 0:
+        print(*prefix)
+        return
+    prefix = prefix or []
+    for digit in range(n):
+        prefix.append(digit)
+        generate_numbers(n, m-1, prefix)
+        prefix.pop()
+
+
+generate_numbers(10, 100)
