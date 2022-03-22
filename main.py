@@ -17,7 +17,7 @@ def main():
     static_handler = MessageHandler(Filters.text('Статистика, статистика'), static)
     sticker_handler = MessageHandler(Filters.sticker, reply_sticker)
     say_smth_handler = MessageHandler(Filters.text, say_smth)
-    new_sticker_handler = MessageHandler(Filters.sticker, new_sticker)
+    new_sticker_handler = MessageHandler(Filters.text('Добавь, добавь'), new_sticker)
     text_handler = MessageHandler(Filters.text, new_keyword)
 
     dispatcher.add_handler(new_sticker_handler)
@@ -39,7 +39,7 @@ def do_echo(update: Update, context: CallbackContext) -> None:
     telegram_id = update.message.chat_id
     username = update.message.from_user.username
     text = update.message.text
-    update.message.reply_text(text=f'{text}')
+    update.message.reply_text(text=text)
     print(username, ':', text)
 
 
@@ -87,6 +87,7 @@ def reply_sticker(update: Update, context: CallbackContext) -> None:
 
 
 def say_smth(update: Update, context: CallbackContext) -> None:
+    global keyword
     name = update.message.from_user.first_name
     text = update.message.text
     for keyword in stickers:
@@ -95,20 +96,22 @@ def say_smth(update: Update, context: CallbackContext) -> None:
                 update.message.reply_sticker(stickers[keyword])
             if replies[keyword]:
                 update.message.reply_text(replies[keyword])
-    else:
+    if keyword:
         do_echo(update, context)
 
 
 def new_sticker(update: Update, context: CallbackContext) -> None:
-    sticker_id = update.message.sticker.file_id
-    for keyword in stickers:
-        if sticker_id == stickers[keyword]:
-            update.message.reply_text('у меня тоже такой есть')
-            update.message.reply_sticker(sticker_id)
-            break
-    else:
-        context.user_data['new_sticker'] = sticker_id
-        update.message.reply_text('введи ключевое слово')
+    if update.message.text == 'Добавь' or update.message.text == 'добавь':
+        update.message.reply_text(text='Пришли стикер')
+        sticker_id = update.message.sticker.file_id
+        for keyword in stickers:
+            if sticker_id == stickers[keyword]:
+                update.message.reply_text('У меня такой есть')
+                update.message.reply_sticker(sticker_id)
+                break
+        else:
+            context.user_data['new_sticker'] = sticker_id
+            update.message.reply_text('Введи ключевое слово')
 
 
 def new_keyword(update: Update, context: CallbackContext) -> None:
