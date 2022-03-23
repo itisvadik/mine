@@ -11,6 +11,17 @@ def insert_sticker(keyword, sticker_id=None, reply_text=None):
     replies[keyword] = reply_text
 
 
+def in_database(user: int) -> bool:
+    """
+    Возвращает True, если id пользователя есть в БД
+    """
+    users_page = bd['users']
+    for row in range(2, users_page.max_row + 1):
+        if user == users_page.cell(row=row, column=1).value:
+            return True
+        return False
+
+
 database_filename = 'database.xlsx'
 bd = load_workbook(database_filename)
 stickers_page = bd['Stickers']
@@ -27,5 +38,4 @@ for row in range(2, stickers_page.max_row + 1):
 
 
 if __name__ == '__main__':
-    print(stickers)
-    insert_sticker('до свидания', reply_text='и вам не хворать')
+    # insert_sticker('до свидания', reply_text='и вам не хворать')

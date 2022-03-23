@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from key import TOKEN
-from connect_to_derictory import stickers, replies, insert_sticker
+from connect_to_derictory import stickers, replies, insert_sticker, in_database
 
 
 def main():
@@ -101,17 +101,15 @@ def say_smth(update: Update, context: CallbackContext) -> None:
 
 
 def new_sticker(update: Update, context: CallbackContext) -> None:
-    if update.message.text == 'Добавь' or update.message.text == 'добавь':
-        update.message.reply_text(text='Пришли стикер')
-        sticker_id = update.message.sticker.file_id
-        for keyword in stickers:
-            if sticker_id == stickers[keyword]:
-                update.message.reply_text('У меня такой есть')
-                update.message.reply_sticker(sticker_id)
-                break
-        else:
-            context.user_data['new_sticker'] = sticker_id
-            update.message.reply_text('Введи ключевое слово')
+    sticker_id = update.message.sticker.file_id
+    for keyword in stickers:
+        if sticker_id == stickers[keyword]:
+            update.message.reply_text('У меня такой есть')
+            update.message.reply_sticker(sticker_id)
+            break
+    else:
+        context.user_data['new_sticker'] = sticker_id
+        update.message.reply_text('Введи ключевое слово')
 
 
 def new_keyword(update: Update, context: CallbackContext) -> None:
@@ -122,6 +120,25 @@ def new_keyword(update: Update, context: CallbackContext) -> None:
         sticker_id = context.user_data['new_sticker']
         insert_sticker(keyword, sticker_id)
         context.user_data.clear()
+
+
+def meet(update: Update, context: CallbackContext):
+    """
+    Старт диалога по добавлению пользователя в БД.
+    Будут собраны последовательно:
+        id пользователя
+        имя
+        пол
+        класс
+    """
+    user_id = update.message.from_user.id
+    if in_database(user_id):
+        pass  # выход из диалога
+    update.message.reply_text(
+        'Привет, тебя ещё нет в моей Базе Данных\n'
+        'Давай знакомиться\n'
+        'Как тебя зовут?'
+    )
 
 
 if __name__ == '__main__':
