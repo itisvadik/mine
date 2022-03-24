@@ -41,4 +41,22 @@ def generate_numbers(n: int, m: int, prefix=None) -> None:
         prefix.pop()
 
 
-generate_numbers(10, 100)
+def generate_permutation(n: int, m: int, prefix=None) -> None:
+    """
+    Выводит в консоль все перестановки длинной m в системе счисления n
+    """
+    if m > n:
+        raise ValueError(f'Длина числа ({m}) не может быть больше основания системы счисления ({n})')
+    if m == 0:
+        print(*prefix)
+        return
+    prefix = prefix or []
+    for digit in range(n):
+        if digit in prefix:
+            continue
+        prefix.append(digit)
+        generate_permutation(n, m-1, prefix)
+        prefix.pop()
+
+
+generate_permutation(100, 600)
