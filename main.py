@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Updater, MessageHandler, Filters, CallbackContext
 from key import TOKEN
-from connect_to_derictory import stickers, replies, insert_sticker, in_database
+from connect_to_derictory import stickers, replies, insert_sticker, in_database, insert_users
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     sticker_handler = MessageHandler(Filters.sticker, reply_sticker)
     say_smth_handler = MessageHandler(Filters.text, say_smth)
     new_sticker_handler = MessageHandler(Filters.text('Добавь, добавь'), new_sticker)
-    text_handler = MessageHandler(Filters.text, new_keyword)
+    text_handler = MessageHandler(Filters.text, meet)
 
     dispatcher.add_handler(new_sticker_handler)
     dispatcher.add_handler(text_handler)
@@ -39,7 +39,7 @@ def do_echo(update: Update, context: CallbackContext) -> None:
     telegram_id = update.message.chat_id
     username = update.message.from_user.username
     text = update.message.text
-    update.message.reply_text(text=text)
+    update.message.reply_text(text)
     print(username, ':', text)
 
 
@@ -134,10 +134,42 @@ def meet(update: Update, context: CallbackContext):
     user_id = update.message.from_user.id
     if in_database(user_id):
         pass  # выход из диалога
+    ask_name(update, context)
+
+
+def ask_name(update: Update, context: CallbackContext) -> None:
+    """
+    Спрашивает имя у пользователя
+    """
     update.message.reply_text(
         'Привет, тебя ещё нет в моей Базе Данных\n'
         'Давай знакомиться\n'
         'Как тебя зовут?'
+    )
+    ask_sex(update, context)
+
+
+def ask_sex(update: Update, context: CallbackContext) -> None:
+    """
+    Спрашивает у пользователя его пол
+    """
+    name = update.message.text
+    context.user_data['name'] = name
+    buttons = [
+        ['Мужской', 'Женский'],
+    ]
+    update.message.reply_text(
+        text=f'''
+        Привет, {name}\n
+        Какой у тебя пол?\n
+        Выбери один из вариантов
+        ''',
+        reply_markup=ReplyKeyboardMarkup(
+            buttons,
+            resize_keyboard=True,
+            one_time_keyboard=True,
+
+        )
     )
 
 
