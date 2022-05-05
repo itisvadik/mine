@@ -32,21 +32,30 @@ def task3():
             break
 
 
-def task4():
-    x = 49**28 + 7**20 - 343**8
-    x_str = ''
-    while x:
-        x_str += str(x % 7)
-        x //= 7
-    print(x_str.count('1'))
-
-
 def task5():
     T = [0, 0, 1, 1, 1]
     for i in range(5, 11):
-        T.append(T[i-1] + (T[i//4] if not i % 4 else 0))
+        T.append(T[i - 1])
+        if i % 4 == 0:
+            T[i] += T[i//4]
+    print(T)
+    for i in range(11, 80):
+        if i == 30:
+            T.append(0)
+        elif i >= 40:
+            T.append(T[i - 1] + (T[i // 4] if not i % 4 else 0))
+        else:
+            T.append(T[i - 1])
     print(T)
 
 
-task5()
+def task6():
+    for A in range(1, 100):
+        flag = True
+        for x in range(1, 10000):
+            if ((x % 25 != 0 or x % 60 != 0) <= (x % A != 0)) == 0:
+                flag = False
+                break
 
+
+task6()
