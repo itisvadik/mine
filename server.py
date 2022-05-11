@@ -5,16 +5,17 @@ from telegram.ext import Filters
 from telegram.ext import CallbackContext
 from telegram.ext import ConversationHandler, CommandHandler
 from key import TOKEN
-from connect_to_derictory import stickers, replies, insert_sticker, in_database, insert_user
+from connect_to_derictory import stickers, replies, insert_sticker, in_database, insert_user, sticker_id
 
 grades = [
     ['8"О"', '8"Н"', '9"О"', '9"Н"', '10"О"', '10"Н"'],
 ]
 keys_grades = ReplyKeyboardMarkup(
-    grades,
-    resize_keyboard=True
-)
+            grades,
+            resize_keyboard=True
+    )
 WAIT_NAME, WAIT_SEX, WAIT_GRADE = range(3)
+WAIT_STICKER, WAIT_KEYWORD = range(2)
 
 
 def main():
@@ -26,8 +27,17 @@ def main():
     dispatcher = updater.dispatcher
 
     # создаём обработчик
-    echo_handler = MessageHandler(Filters.all, do_echo)
-    new_sticker_handler = MessageHandler(Filters.text('Добавить стикер'), new_sticker)
+
+    say_smth_handler = ConversationHandler(
+        entry_points=[CommandHandler('keyboard', send_sticker)],
+        states={
+            WAIT_STICKER: [MessageHandler(Filters.sticker, new_sticker)],
+            WAIT_KEYWORD: [MessageHandler(Filters.text, add_sticker)]
+        },
+        fallbacks=[],
+    )
+
+    new_sticker_handler = MessageHandler(Filters.sticker, new_sticker)
     text_handler = MessageHandler(Filters.text, meet)
     hello_handler = MessageHandler(Filters.text('Привет'), say_hello)
     bye_handler = MessageHandler(Filters.text('пока'), say_bye)
@@ -38,11 +48,13 @@ def main():
             WAIT_NAME: [MessageHandler(Filters.text, ask_sex)],
             WAIT_SEX: [MessageHandler(Filters.text, ask_grade)],
             WAIT_GRADE: [MessageHandler(Filters.text, greet)],
-        },      # Состояния конечного автомата для диалога
-        fallbacks=[],   # общие точки выхода или отмены
+        },  # Состояния конечного автомата для диалога
+        fallbacks=[],  # общие точки выхода или отмены
     )
+    echo_handler = MessageHandler(Filters.all, do_echo)
 
     # регестрируем обработчик
+    dispatcher.add_handler(say_smth_handler)
     dispatcher.add_handler(conv_handler)
     dispatcher.add_handler(hello_handler)
     dispatcher.add_handler(keyboard_handler)
@@ -56,26 +68,21 @@ def main():
 
 
 def do_echo(update: Update, context: CallbackContext) -> None:
-    id = update.message.chat_id
+    user_id = update.message.chat_id
     user = update.message.from_user.username
     text = update.message.text
     sticker = update.message.sticker
     if sticker:
         sticker_id = sticker.file_id
         update.message.reply_sticker(sticker_id)
-    update.message.reply_text(text=
-                              f' держи своё {text}\n'
-                              f'а это твой айдишник {id}\n'
-                              f'и вообще ты @{user}\n'
-
-                              )
+    update.message.reply_text(text)
 
 
 def say_hello(update: Update, context: CallbackContext):
     name = update.message.from_user.first_name
     update.message.reply_text(text=f'Привет, {name} \n'
-                                f' приятно познакомиться с живым человеком\n'
-                                f'Я - бот'
+                                   f' приятно познакомиться с живым человеком\n'
+                                   f'Я - бот'
                               )
 
 
@@ -93,20 +100,32 @@ def say_smth(update: Update, context: CallbackContext):
             if replies[keyword]:
                 update.message.reply_text(replies[keyword].format(name))
             break
-    else:
-        do_echo(update, context)
+        if keyword not in text:
+            do_echo(update, context)
+
+
+def send_sticker(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(text='Привет\n'
+                              'Пришли, пожалуйста стикер\n'
+                              'Он будет записан в БД.'
+                              )
+    return WAIT_STICKER
 
 
 def new_sticker(update: Update, context: CallbackContext) -> None:
     sticker_id = update.message.sticker.file_id
     for keyword in stickers:
         if sticker_id == stickers[keyword]:
-            update.message.reply_text('у меня тоже такой есть')
+            update.message.reply_text('У меня такой есть')
             update.message.reply_sticker(sticker_id)
-            break
-    else:
-        context.user_data['new_sticker'] = sticker_id
-        update.message.reply_text('введи ключевое слово')
+            return WAIT_STICKER
+    return WAIT_KEYWORD
+
+
+def add_sticker(update: Update, context: CallbackContext) -> None:
+    context.user_data['new_sticker'] = sticker_id
+    update.message.reply_text('Введи ключевое слово')
+    return WAIT_KEYWORD
 
 
 def new_keyword(update: Update, context: CallbackContext) -> None:
@@ -139,29 +158,30 @@ def keyboard(update: Update, context: CallbackContext) -> None:
 
 
 def meet(update: Update, context: CallbackContext):
-    '''
+    """
     старт диалога по добавлению пользователя в базу данных
-    будут собраны последовательно
+    будут собраны последовательно:
         id пользователя
         имя
         пол
         класс
-    '''
+    """
     user_id = update.message.from_user.id
     if in_database(user_id):
         update.message.reply_text(
             f'Добро пожаловать, {update.message.from_user.first_name}\n'
         )
+        return
     return ask_name(update, context)
 
 
 def ask_name(update: Update, context: CallbackContext):
-    '''
+    """
     спрашиваем имя
     TODO проверить имя пользователя в телеграме
-    '''
+    """
     update.message.reply_text(
-        'Привет, меня зовут Бот\n' 
+        'Привет, меня зовут Бот\n'
         'А тебя?',
         reply_markup=ReplyKeyboardRemove()
     )
@@ -169,9 +189,9 @@ def ask_name(update: Update, context: CallbackContext):
 
 
 def ask_sex(update: Update, context: CallbackContext):
-    '''
+    """
     спрашиваем пол, выводим клавиатуру
-    '''
+    """
     name = update.message.text
     if not name_is_valid(name):
         update.message.reply_text(
@@ -180,25 +200,26 @@ def ask_sex(update: Update, context: CallbackContext):
             'Попробуй ещё раз'
         )
         return WAIT_NAME
-    context.user_data['name'] = name    # запоминаем имя
+    context.user_data['name'] = name  # запоминаем имя
     buttons = [
         ['м', 'ж']
     ]
     keys = ReplyKeyboardMarkup(
         buttons,
-        resize_keyboard=True        # размер
+        resize_keyboard=True  # размер
     )
     update.message.reply_text(
         text=f'Приятно познакомиться, {name}, укажи пожалуйста свой пол',
-        reply_markup=keys   # разметка
+        reply_markup=keys,
+        # разметка
     )
     return WAIT_SEX
 
 
 def ask_grade(update: Update, context: CallbackContext):
-    '''
+    """
     спрашиваем класс с помощью клавиатуры
-    '''
+    """
     sex = update.message.text
     if not sex_is_valid(sex):
         update.message.reply_text(
@@ -220,14 +241,14 @@ def ask_grade(update: Update, context: CallbackContext):
 
 
 def greet(update: Update, context: CallbackContext):
-    '''
+    """
     Записывает в БД:
         user_id(из сообщения)
         name(из контекста)
         sex(из контекста)
         grade(из сообщения)
     приветствует нового пользователя
-    '''
+    """
     grade = update.message.text
     if not grade_is_valid(grade):
         update.message.reply_text(
@@ -242,11 +263,12 @@ def greet(update: Update, context: CallbackContext):
     insert_user(user_id, name, sex, grade)
 
     update.message.reply_text(
-        f'Новая запись в БД\n'
-        f'{user_id}\n'
-        f'{name}\n'
-        f'{sex}\n'
-        f'{grade}'
+        f'новый пользователь Бота\n'
+        f'id: {user_id}\n'
+        f'имя: {name}\n'
+        f'пол: {sex}\n'
+        f'класс: {grade}\n'
+        f'приятного пользования, {name}!'
     )
     return ConversationHandler.END
 
