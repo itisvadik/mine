@@ -27,13 +27,26 @@ def task11():
         if i % 3 == 0:
             T[i] += T[i // 3]
     print(T)
-    
-    
-def task7():
-    x = 32**23 + 2**12 - 16**8
-    x_str = ''
-    while x:
-        x_str += str(x % 4)
-        x //= 4
-    print(x_str[::-1])
-    print(x_str.count('3'))
+
+
+def task12():
+    number = 9 ** 8 + 3 ** 5 - 9
+    str_number = ''
+    while number > 0:
+        ost = number % 3
+        str_number += str(ost)
+        number //= 3
+    print(str_number.count('2'))
+
+
+def task13():
+    number = 4 ** 511 + 2 ** 511 - 511
+    str_number = ''
+    while number > 0:
+        ost = number % 2
+        str_number += str(ost)
+        number //= 2
+    print(str_number.count('1'))
+
+
+task12()
